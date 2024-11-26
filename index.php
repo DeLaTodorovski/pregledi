@@ -12,8 +12,18 @@ $db = new Database($config['database']);
 
 // dd($posts);
 
-if(isset($_GET['broj']) && $_GET['broj'] != "" && $_GET['broj'] > 0 && $_GET['broj'] < 35 && $_GET['odd'] < 10 && isset($_GET['odd']) && $_GET['odd'] != "" && $_GET['odd'] > 0 && is_numeric($_GET['odd']) && is_numeric($_GET['broj'])) {
-    echo "Преглед за ".$_GET['broj']." ученици <br>";
+if(isset($_GET['odd'])  && $_GET['odd'] < 10 && $_GET['odd'] != "" && $_GET['odd'] > 0 && is_numeric($_GET['odd']) && isset($_GET['bukva']) && $_GET['bukva'] != "") {
+    
+    $bukva = $_GET['bukva'];
+    $ucenici = $db->query("SELECT * FROM `ucenici` WHERE `oddelenie` = ".$_GET['odd']." AND `bukva` = '$bukva'")->fetchAll();
+    $brucenici = $db->count("SELECT count(*) FROM ucenici WHERE `oddelenie` = ? AND `bukva` = ? ", [$_GET['odd'], $bukva]);
+    $nastavnik = $db->query("SELECT * FROM `nastavnik` WHERE `oddelenie` = ".$_GET['odd']." AND `bukva` = '$bukva' ")->fetch();
+    echo "<a href='./pregled'> << Врати се назад </a>";    
+if ($brucenici > 0){
+    // echo "Преглед за ".$_GET['broj']." ученици <br>";
+    echo "<br>Преглед за ".$brucenici." ученици <br>";
+    echo "Класен раководител ".$nastavnik['ime']." ".$nastavnik['prezime']."<br><br>";
+
     $oddelenija = $db->query("select * from oddelenie WHERE id = ".$_GET['odd']."")->fetchAll();
     echo "
     <form method='POST' action=''>
@@ -49,17 +59,21 @@ if(isset($_GET['broj']) && $_GET['broj'] != "" && $_GET['broj'] > 0 && $_GET['br
     </tr>
     </thead>
     <tbody>";
-    $array_o = [];
-    for ($i=0; $i < $_GET['broj']; $i++){
 
-        $ime = '';
-        $prezime = '';
-        $pol = '';
+    $array_o = [];
+    $i=0;
+    foreach($ucenici as $ucenik){
+    // for ($i=0; $i < $_GET['broj']; $i++){
+        $i++;
+        $id = $ucenik['id'];
+        $ime = $ucenik['ime'];
+        $prezime = $ucenik['prezime'];
+        $pol = $ucenik['pol'];
         $maski = '';
         $zenski = '';
         $predmet_p  = '';
-        $opravdani = 0;
-        $neopravdani = 0;
+        $opravdani = '';
+        $neopravdani = '';
 
 
         if(isset($_POST['ime'.($i+1)])){  $ime = $_POST['ime'.($i+1)]; }
@@ -103,48 +117,52 @@ if(isset($_GET['broj']) && $_GET['broj'] != "" && $_GET['broj'] > 0 && $_GET['br
                         if(isset($_POST[$predmetid])){  
                             $predmet_p = $_POST[$predmetid];
                         }
-                        echo "<td><input type='number'  min='1' max='5' style='idth: 5em' name='".$predmetid."' value='";
-                        if(isset($_POST[$predmetid])){  
-                            echo $_POST[$predmetid]; 
-                        }else{
-                            echo 0;
-                        }
-                        echo "' required></td>";
-                       
+                        // echo "<td><input type='number'  min='1' max='5' style='idth: 5em' name='".$predmetid."' value='";
+                        // if(isset($_POST[$predmetid])){  
+                        //     echo $_POST[$predmetid]; 
+                        // }else{
+                        //     echo 0;
+                        // }
+                        // echo "' required></td>";
+                        if(isset($_POST['opravdani'.($i+1)])){  $opravdani = $_POST['opravdani'.($i+1)]; }
+                       echo "<td><input type='number'  min='1' max='5' style='idth: 5em' name='".$predmetid."' value='$predmet_p' required></td>";
                        
                     }
                     
                     $tarray[$predmetid] = (int)$predmet_p;
-                    
+      
                 }
+                $slabi  = 0;
+                $slabiAr = [];
+                foreach($tarray as $slaba){
+                    if ($slaba == 1){
+                        $slabiAr[] = $slaba;
+                    }
+                }
+                $slabi = count($slabiAr);
 
-                //var_dump($tarray);
-
-                
-
+                $site_oceni = implode(', ', $tarray);
 
                    // echo $prosek;
-                
-                  
-                 
                 //echo $count."<br>";
 
-
-                // var_dump($tarray);
                 if(isset($_POST['opravdani'.($i+1)])){  $opravdani = $_POST['opravdani'.($i+1)]; }
                 if(isset($_POST['neopravdani'.($i+1)])){  $neopravdani = $_POST['neopravdani'.($i+1)]; }
                 echo "<td><input type='number' min='1' max='500'  style='idth: 5em' name='opravdani".($i+1)."' value='$opravdani' required></td>";
                 echo "<td><input type='number' min='1' max='500'  style='idth: 5em' name='neopravdani".($i+1)."' value='$neopravdani' required></td>";
-                echo "<tr><td colspan='".($count+6)."'>Ученикот $ime $prezime постигна ".uspeh($tarray)." успех со просек ".prosek($tarray)."! ";
 
-                if ($opravdani != '' && $neopravdani != ''){
+                if ($opravdani != '' || $neopravdani != ''){
                     $vkupno = (int)$opravdani+(int)$neopravdani;
                 }else{
                     $vkupno = 0;
                 }
-                
-                echo "Ученикот има вкупно $vkupno изостаноци од кои $opravdani се оправдани и $neopravdani неоправдани!</td></tr>";
+
+                if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                    echo "<tr><td colspan='".($count+6)."'>Ученикот $ime $prezime постигна ".uspeh($tarray)." успех со просек ".prosek($tarray)." со $slabi слаби! ";
+                    echo "Ученикот има вкупно $vkupno изостаноци од кои $opravdani се оправдани и $neopravdani неоправдани!</td></tr>";
+                    $db->insert("UPDATE `ucenici` SET `oceni` = ?, `opravdani` = ?, `neopravdani` = ?, `slabi` = ?, `prosek` = ? WHERE `id` = ?", [$site_oceni, $opravdani, $neopravdani, '', prosek($tarray), $id]);
                 //$bigarray[] = array_push($tarray);
+                }
             
             }
             
@@ -155,7 +173,7 @@ if(isset($_GET['broj']) && $_GET['broj'] != "" && $_GET['broj'] > 0 && $_GET['br
         echo "</tr>";
     }
 
-    //var_dump($array_o);
+
 
     
     
@@ -163,28 +181,32 @@ if(isset($_GET['broj']) && $_GET['broj'] != "" && $_GET['broj'] > 0 && $_GET['br
     <button type='submit'>Генерирај</button>
     </form>
     ";
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo "Просек на одделението е ".prosek($array_o)." со постигнат ".uspeh($array_o)." успех!<br><br>";
+    }
 
+}else{
+    echo "Настана грешка во пребарувањето!<br><br>";
+    echo "<a href='./pregled'> << Врати се назад </a>";    
 
+}
 
 
 } else {
     ?>
 
     <form method="get" action="./pregled">
-    <label for="broj">Број на ученици:</label>
-    <input name="broj" type="number" value=0 min='1' max='9' style='idth: 5em'>
     <label for="odd">Избери одделение:</label>
     <select name="odd" id="odd">
-        <option value="1">прво</option>
-        <option value="2">второ</option>
-        <option value="3">трето</option>
-        <option value="4">четврто</option>
-        <option value="5">петто</option>
-        <option value="6">шесто</option>
         <option value="7">седмо</option>
         <option value="8">осмо</option>
         <option value="9">деветто</option>
+    </select>
+    <label for="bukva">Буква:</label>
+    <select name="bukva" id="bukva">
+        <option value="A">А</option>
+        <option value="Б">Б</option>
+        <option value="В">В</option>
     </select>
     <button type="submit">Продолжи</button>
     </form>

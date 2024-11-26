@@ -21,4 +21,23 @@ class Database
 
         return $statement;
     }
+
+    public function insert($query, $execute)
+    {
+        $statement = $this->connection->prepare($query);
+
+        $statement->execute($execute);
+
+        return $statement;
+    }
+
+    public function count($query, $execute)
+    {
+        $statement = $this->connection->prepare($query);
+
+        $statement->execute($execute);
+
+        return $statement->fetchColumn();
+    }
+
 }

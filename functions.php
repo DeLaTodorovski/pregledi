@@ -35,12 +35,20 @@ function urlIs($value) {
     }
   
   }
+
+
   
     function prosek($array){
-    
+    $new_ar = [];
+ foreach($array as $value) {
+    if($value != ''){
+      $new_ar[] = $value;
+    }
+  }
+
     $sumarum = array_sum($array);
     $countar = count($array);
     $sumarum = $sumarum / $countar;
     return round($sumarum, 2);
-  
+
   }
