@@ -17,8 +17,18 @@ if(isset($_GET['odd'])  && $_GET['odd'] < 10 && $_GET['odd'] != "" && $_GET['odd
     $bukva = $_GET['bukva'];
     $ucenici = $db->query("SELECT * FROM `ucenici` WHERE `oddelenie` = ".$_GET['odd']." AND `bukva` = '$bukva'")->fetchAll();
     $brucenici = $db->count("SELECT count(*) FROM ucenici WHERE `oddelenie` = ? AND `bukva` = ? ", [$_GET['odd'], $bukva]);
+    $bruceniciSoSlaba = $db->count("SELECT count(*) FROM ucenici WHERE `oddelenie` = ? AND `bukva` = ? AND `slabi` > ? ", [$_GET['odd'], $bukva, 0]);
+    $bruceniciSoSlabi = $db->count("SELECT count(*) FROM ucenici WHERE `oddelenie` = ? AND `bukva` = ? AND `slabi` > ? ", [$_GET['odd'], $bukva, 1]);
+    $bruceniMaski = $db->count("SELECT count(*) FROM ucenici WHERE `oddelenie` = ? AND `bukva` = ? AND `pol` = ? ", [$_GET['odd'], $bukva, 1]);
+    $bruceniZenski = $db->count("SELECT count(*) FROM ucenici WHERE `oddelenie` = ? AND `bukva` = ? AND `pol` = ? ", [$_GET['odd'], $bukva, 2]);
+    $brojOdlicni = $db->count("SELECT count(*) FROM ucenici WHERE `oddelenie` = ? AND `bukva` = ? AND `prosek` >= ? ", [$_GET['odd'], $bukva, 4.5]);
+    $brojMnDobri = $db->count("SELECT count(*) FROM ucenici WHERE `oddelenie` = ? AND `bukva` = ? AND `prosek` >= ? AND `prosek` < ?", [$_GET['odd'], $bukva, 3.5, 4.5]);
+    $brojDobri = $db->count("SELECT count(*) FROM ucenici WHERE `oddelenie` = ? AND `bukva` = ? AND `prosek` >= ? AND `prosek` < ?", [$_GET['odd'], $bukva, 2.5, 3.5]);
+    $brojDovolni = $db->count("SELECT count(*) FROM ucenici WHERE `oddelenie` = ? AND `bukva` = ? AND `prosek` >= ? AND `prosek` < ?", [$_GET['odd'], $bukva, 2, 2.5]);
     $nastavnik = $db->query("SELECT * FROM `nastavnik` WHERE `oddelenie` = ".$_GET['odd']." AND `bukva` = '$bukva' ")->fetch();
     echo "<a href='./pregled'> << Врати се назад </a>";    
+
+    
 if ($brucenici > 0){
     // echo "Преглед за ".$_GET['broj']." ученици <br>";
     echo "<br>Преглед за ".$brucenici." ученици <br>";
@@ -76,13 +86,13 @@ if ($brucenici > 0){
         $neopravdani = '';
 
 
-        if(isset($_POST['ime'.($i+1)])){  $ime = $_POST['ime'.($i+1)]; }
-        if(isset($_POST['prezime'.($i+1)])){  $prezime = $_POST['prezime'.($i+1)]; }
-        if(isset($_POST['pol'.($i+1)])){  $pol = $_POST['pol'.($i+1)]; }
+        if(isset($_POST['ime'.$id])){  $ime = $_POST['ime'.$id]; }
+        if(isset($_POST['prezime'.$id])){  $prezime = $_POST['prezime'.$id]; }
+        if(isset($_POST['pol'.$id])){  $pol = $_POST['pol'.$id]; }
 
-        echo "<tr><td>".($i+1)."</td>";
-        echo "<td> <input name='ime".($i+1)."' type='text' value='$ime' placeholder='Име' required></td>";
-        echo "<td> <input name='prezime".($i+1)."' type='text' placeholder='Презиме' value='$prezime' required></td>";
+        echo "<tr><td>$i</td>";
+        echo "<td> <input name='ime".$id."' type='text' value='$ime' placeholder='Име' required></td>";
+        echo "<td> <input name='prezime".$id."' type='text' placeholder='Презиме' value='$prezime' required></td>";
             if($pol == 1){
                 $maski = 'selected';
                 $zenski = '';
@@ -91,7 +101,7 @@ if ($brucenici > 0){
                 $maski = '';
                 $zenski = 'selected';
             }
-        echo '<td> <select name="pol'.($i+1).'" id="pol" required>
+        echo '<td> <select name="pol'.$id.'" id="pol" required>
         <option value="1" '.$maski.'>машки</option>
         <option value="2" '.$zenski.'>женски</option>
         </select>
@@ -113,7 +123,7 @@ if ($brucenici > 0){
 
                     foreach ($predmeti as $predmet){
                         
-                        $predmetid = $predmet['short'].($i+1);
+                        $predmetid = $predmet['short'].$id;
                         if(isset($_POST[$predmetid])){  
                             $predmet_p = $_POST[$predmetid];
                         }
@@ -124,7 +134,7 @@ if ($brucenici > 0){
                         //     echo 0;
                         // }
                         // echo "' required></td>";
-                        if(isset($_POST['opravdani'.($i+1)])){  $opravdani = $_POST['opravdani'.($i+1)]; }
+                        if(isset($_POST['opravdani'.$id])){  $opravdani = $_POST['opravdani'.$id]; }
                        echo "<td><input type='number'  min='1' max='5' style='idth: 5em' name='".$predmetid."' value='$predmet_p' required></td>";
                        
                     }
@@ -146,10 +156,10 @@ if ($brucenici > 0){
                    // echo $prosek;
                 //echo $count."<br>";
 
-                if(isset($_POST['opravdani'.($i+1)])){  $opravdani = $_POST['opravdani'.($i+1)]; }
-                if(isset($_POST['neopravdani'.($i+1)])){  $neopravdani = $_POST['neopravdani'.($i+1)]; }
-                echo "<td><input type='number' min='1' max='500'  style='idth: 5em' name='opravdani".($i+1)."' value='$opravdani' required></td>";
-                echo "<td><input type='number' min='1' max='500'  style='idth: 5em' name='neopravdani".($i+1)."' value='$neopravdani' required></td>";
+                if(isset($_POST['opravdani'.$id])){  $opravdani = $_POST['opravdani'.$id]; }
+                if(isset($_POST['neopravdani'.$id])){  $neopravdani = $_POST['neopravdani'.$id]; }
+                echo "<td><input type='number' min='1' max='500'  style='idth: 5em' name='opravdani".$id."' value='$opravdani' ></td>";
+                echo "<td><input type='number' min='1' max='500'  style='idth: 5em' name='neopravdani".$id."' value='$neopravdani' required></td>";
 
                 if ($opravdani != '' || $neopravdani != ''){
                     $vkupno = (int)$opravdani+(int)$neopravdani;
@@ -160,7 +170,7 @@ if ($brucenici > 0){
                 if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     echo "<tr><td colspan='".($count+6)."'>Ученикот $ime $prezime постигна ".uspeh($tarray)." успех со просек ".prosek($tarray)." со $slabi слаби! ";
                     echo "Ученикот има вкупно $vkupno изостаноци од кои $opravdani се оправдани и $neopravdani неоправдани!</td></tr>";
-                    $db->insert("UPDATE `ucenici` SET `oceni` = ?, `opravdani` = ?, `neopravdani` = ?, `slabi` = ?, `prosek` = ? WHERE `id` = ?", [$site_oceni, $opravdani, $neopravdani, '', prosek($tarray), $id]);
+                    $db->insert("UPDATE `ucenici` SET `oceni` = ?, `opravdani` = ?, `neopravdani` = ?, `slabi` = ?, `prosek` = ? WHERE `id` = ?", [$site_oceni, $opravdani, $neopravdani, $slabi, prosek($tarray), $id]);
                 //$bigarray[] = array_push($tarray);
                 }
             
@@ -180,9 +190,36 @@ if ($brucenici > 0){
     echo "</tbody></table>
     <button type='submit'>Генерирај</button>
     </form>
+    <br>
     ";
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    echo "Просек на одделението е ".prosek($array_o)." со постигнат ".uspeh($array_o)." успех!<br><br>";
+        echo "
+        <table class='table'>
+        <thead class='thead-primary'>
+        <tr>
+        <th colspan=2>Пол</th>
+        </tr>
+        <thead>
+        <tr><td>Женски:</td><td>$bruceniZenski</td></tr>
+        <tr><td>Машки:</td><td>$bruceniMaski</td></tr>
+        <tr><td>Вкупно:</td><td>$brucenici</td></tr>
+        </table><br>";
+        echo "
+        <table class='table'>
+        <thead class='thead-primary'>
+        <tr>
+        <th colspan=2>Успех</th>
+        </tr>
+        <thead>
+        <tr><td>Одлични:</td><td>$brojOdlicni</td></tr>
+        <tr><td>Многу добри:</td><td>$brojMnDobri</td></tr>
+        <tr><td>Добри:</td><td>$brojDobri</td></tr>
+        <tr><td>Доволни:</td><td>$brojDovolni</td></tr>
+        <tr><td>Со 1 слаба:</td><td>$bruceniciSoSlaba</td></tr>
+        <tr><td>Со повеќе слаби:</td><td>$bruceniciSoSlabi</td></tr>
+        <tr><td>Просек на одделението </td><td> ".prosek($array_o)." со постигнат ".uspeh($array_o)." успех!</td></tr>
+        </thead>
+        </table><br>";
     }
 
 }else{
